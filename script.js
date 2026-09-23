@@ -2,6 +2,10 @@ const SHEET_BASE_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSWlkX7NLT9rGfqQ-tNov39cbgp_qxnP2q7iFV1nZ48RhWUYlsvfxK3_cv8t8FTpJo_XgTBhSlOnEch/pub?output=csv";
 
 const SHEETS = {
+  about: {
+    title: "About",
+    url: `${SHEET_BASE_URL}&gid=1635837713`,
+  },
   albums: {
     title: "Albums",
     url: `${SHEET_BASE_URL}&gid=0`,
@@ -17,6 +21,7 @@ const SHEETS = {
 };
 
 const sheetData = {
+  about: [],
   albums: [],
   films: [],
   other: [],
@@ -95,23 +100,26 @@ const rowsToObjects = (rows) => {
 
   const headers = rows[0].map((header) => header.trim());
 
-  return rows.slice(1).map((row, index) => {
-    const entry = { index };
+  return rows
+    .slice(1)
+    .map((row, index) => {
+      const entry = { index };
 
-    headers.forEach((header, columnIndex) => {
-      if (!header) {
-        return;
-      }
+      headers.forEach((header, columnIndex) => {
+        if (!header) {
+          return;
+        }
 
-      entry[header] = (row[columnIndex] || "").trim();
-    });
+        entry[header] = (row[columnIndex] || "").trim();
+      });
 
-    return entry;
-  }).filter((entry) =>
-    Object.entries(entry).some(
-      ([key, value]) => key !== "index" && String(value || "").trim() !== "",
-    ),
-  );
+      return entry;
+    })
+    .filter((entry) =>
+      Object.entries(entry).some(
+        ([key, value]) => key !== "index" && String(value || "").trim() !== "",
+      ),
+    );
 };
 
 const loadSheet = async (url) => {
@@ -154,7 +162,9 @@ const populateList = (container, items, type) => {
     return;
   }
 
-  container.innerHTML = items.map((item) => buildCardMarkup(item, type)).join("");
+  container.innerHTML = items
+    .map((item) => buildCardMarkup(item, type))
+    .join("");
 };
 
 const renderOtherPage = (container, items) => {
@@ -171,7 +181,10 @@ const renderOtherPage = (container, items) => {
     .map((item) => {
       const values = Object.entries(item)
         .filter(([key, value]) => key !== "index" && value)
-        .map(([key, value]) => `<li><strong>${escapeHtml(key)}</strong> ${escapeHtml(value)}</li>`)
+        .map(
+          ([key, value]) =>
+            `<li><strong>${escapeHtml(key)}</strong> ${escapeHtml(value)}</li>`,
+        )
         .join("");
 
       const title = item.Title || `Item ${item.index + 1}`;
@@ -193,6 +206,29 @@ const renderOtherPage = (container, items) => {
         </div>
       `;
     })
+    .join("");
+};
+
+const renderAboutPage = (container, items) => {
+  if (!container) {
+    return;
+  }
+
+  const paragraphs = items.flatMap((item) =>
+    String(item.Description || "")
+      .replaceAll("\r\n", "\n")
+      .split(/\n+/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean),
+  );
+
+  if (paragraphs.length === 0) {
+    container.innerHTML = "";
+    return;
+  }
+
+  container.innerHTML = paragraphs
+    .map((paragraph) => `<p class="page__intro">${escapeHtml(paragraph)}</p>`)
     .join("");
 };
 
@@ -222,17 +258,31 @@ const renderDetailPage = (data) => {
   const detailImage = document.querySelector("#detailImage");
   const detailType = document.querySelector("#detailType");
   const detailTitle = document.querySelector("#detailTitle");
+  const detailArtist = document.querySelector("#detailArtist");
   const detailMeta = document.querySelector("#detailMeta");
   const detailLink = document.querySelector("#detailLink");
   const detailBack = document.querySelector("#detailBack");
 
-  if (!match || !detailImage || !detailType || !detailTitle || !detailMeta || !detailLink || !detailBack) {
+  if (
+    !match ||
+    !detailImage ||
+    !detailType ||
+    !detailTitle ||
+    !detailArtist ||
+    !detailMeta ||
+    !detailLink ||
+    !detailBack
+  ) {
     return;
   }
 
   detailType.textContent = SHEETS[type].title.slice(0, -1);
   detailTitle.textContent = match.Title || "Untitled";
-  detailMeta.textContent = [match.Date, match.Director].filter(Boolean).join(" · ");
+  detailArtist.textContent = match.Artist || "";
+  detailArtist.hidden = !(type === "albums" && match.Artist);
+  detailMeta.textContent = [match.Date, match.Director]
+    .filter(Boolean)
+    .join(" · ");
   detailImage.style.cssText = getCardImageStyle(match.Image);
   detailLink.href = match.Link || "#";
   detailLink.target = match.Link ? "_blank" : "_self";
@@ -249,6 +299,7 @@ const initPage = async () => {
   setActiveNav(page);
 
   const needsData =
+    document.querySelector("#aboutIntro") ||
     document.querySelector("#albums-grid") ||
     document.querySelector("#films-grid") ||
     document.querySelector("#other-grid") ||
@@ -258,24 +309,31 @@ const initPage = async () => {
     return;
   }
 
-  const [albums, films, other] = await Promise.all([
+  const [about, albums, films, other] = await Promise.all([
+    loadSheet(SHEETS.about.url),
     loadSheet(SHEETS.albums.url),
     loadSheet(SHEETS.films.url),
     loadSheet(SHEETS.other.url),
   ]);
 
+  sheetData.about = about;
   sheetData.albums = albums;
   sheetData.films = films;
   sheetData.other = other;
 
-  populateList(document.querySelector("#albums-grid"), sheetData.albums, "albums");
+  renderAboutPage(document.querySelector("#aboutIntro"), sheetData.about);
+  populateList(
+    document.querySelector("#albums-grid"),
+    sheetData.albums,
+    "albums",
+  );
   populateList(document.querySelector("#films-grid"), sheetData.films, "films");
   renderOtherPage(document.querySelector("#other-grid"), sheetData.other);
   const pageStatus = document.querySelector("#pageStatus");
   if (pageStatus) {
     pageStatus.textContent =
       sheetData.other.length > 0
-        ? "Loaded directly from the Google Sheet."
+        ? "..."
         : "No rows are published in the Other tab yet.";
   }
   renderDetailPage(sheetData);
@@ -283,6 +341,11 @@ const initPage = async () => {
 
 initPage().catch((error) => {
   console.error(error);
+  const aboutIntro = document.querySelector("#aboutIntro");
+  if (aboutIntro) {
+    aboutIntro.innerHTML =
+      '<p class="page__intro">Unable to load the About text.</p>';
+  }
   const status = document.querySelector("#pageStatus");
   if (status) {
     status.textContent = "Unable to load sheet data.";

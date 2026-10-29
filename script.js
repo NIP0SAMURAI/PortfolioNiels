@@ -179,8 +179,20 @@ const renderOtherPage = (container, items) => {
 
   container.innerHTML = items
     .map((item) => {
+      const youtubeColumn = Object.keys(item).find(
+        (key) => key.toLowerCase() === "youtube",
+      );
+      const videoUrl = youtubeColumn
+        ? getYouTubeEmbedUrl(item[youtubeColumn])
+        : "";
       const values = Object.entries(item)
-        .filter(([key, value]) => key !== "index" && value)
+        .filter(
+          ([key, value]) =>
+            key !== "index" &&
+            (key !== youtubeColumn || !videoUrl) &&
+            (!videoUrl || key !== "Title") &&
+            value,
+        )
         .map(
           ([key, value]) =>
             `<li><strong>${escapeHtml(key)}</strong> ${escapeHtml(value)}</li>`,
@@ -189,6 +201,28 @@ const renderOtherPage = (container, items) => {
 
       const title = item.Title || `Item ${item.index + 1}`;
       const link = item.Link || "";
+
+      if (videoUrl) {
+        return `
+          <div class="page__link-card">
+            <h3 class="page__link-title">${escapeHtml(title)}</h3>
+            <ul class="detail__facts">${values}</ul>
+            <iframe
+              class="page__link-video"
+              src="${escapeHtml(videoUrl)}"
+              title="${escapeHtml(`${title} video`)}"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            ></iframe>
+            ${
+              link
+                ? `<a class="page__link-text" href="${escapeHtml(link)}" target="_blank" rel="noreferrer">Open link</a>`
+                : ""
+            }
+          </div>
+        `;
+      }
 
       if (link) {
         return `
@@ -207,6 +241,25 @@ const renderOtherPage = (container, items) => {
       `;
     })
     .join("");
+};
+
+const getYouTubeEmbedUrl = (value) => {
+  const content = String(value || "").trim();
+  if (!content) {
+    return "";
+  }
+
+  const iframe = content.startsWith("<")
+    ? new DOMParser()
+        .parseFromString(content, "text/html")
+        .querySelector("iframe")
+    : null;
+  const source = iframe ? iframe.getAttribute("src") || "" : content;
+  const videoId = source.match(
+    /^https:\/\/(?:www\.)?(?:youtube\.com|youtube-nocookie\.com)\/embed\/([A-Za-z0-9_-]+)(?:[/?#]|$)/i,
+  )?.[1];
+
+  return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : "";
 };
 
 const renderAboutPage = (container, items) => {
@@ -333,7 +386,7 @@ const initPage = async () => {
   if (pageStatus) {
     pageStatus.textContent =
       sheetData.other.length > 0
-        ? "..."
+        ? ""
         : "No rows are published in the Other tab yet.";
   }
   renderDetailPage(sheetData);

@@ -191,6 +191,7 @@ const renderOtherPage = (container, items) => {
             key !== "index" &&
             (key !== youtubeColumn || !videoUrl) &&
             (!videoUrl || key !== "Title") &&
+            (!videoUrl || key !== "Description") &&
             value,
         )
         .map(
@@ -201,6 +202,7 @@ const renderOtherPage = (container, items) => {
 
       const title = item.Title || `Item ${item.index + 1}`;
       const link = item.Link || "";
+      const description = String(item.Description || "").trim();
 
       if (videoUrl) {
         return `
@@ -215,6 +217,11 @@ const renderOtherPage = (container, items) => {
               referrerpolicy="strict-origin-when-cross-origin"
               allowfullscreen
             ></iframe>
+            ${
+              description
+                ? `<p class="page__link-description">${escapeHtml(description)}</p>`
+                : ""
+            }
             ${
               link
                 ? `<a class="page__link-text" href="${escapeHtml(link)}" target="_blank" rel="noreferrer">Open link</a>`

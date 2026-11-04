@@ -130,6 +130,7 @@ body[data-page="home"] .page {
 
 .page__link-card {
   display: block;
+  padding-bottom: 2rem;
 }
 
 .page__link-title {
@@ -148,6 +149,13 @@ body[data-page="home"] .page {
   display: center;
   width: 100%;
   aspect-ratio: 16 / 9;
+}
+
+.page__link-description {
+  margin-top: 0.75rem;
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  white-space: pre-line;
 }
 
 /* Hero */
@@ -470,7 +478,7 @@ body[data-page="home"] .footer__inner {
 /* Contact */
 
 .contact {
-  padding: 10rem 0 10rem 3rem;
+  padding: 2rem 0 6rem 3rem;
 }
 
 .contact__text {

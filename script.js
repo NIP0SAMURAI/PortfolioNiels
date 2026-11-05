@@ -309,7 +309,7 @@ const getSpotifyEmbed = (link) => {
 
     const path = url.pathname.split("/").filter(Boolean);
     const resourceIndex = path.findIndex((segment) =>
-      ["album", "track"].includes(segment),
+      ["album", "track", "artist"].includes(segment),
     );
     const resourceType = path[resourceIndex];
     const resourceId = path[resourceIndex + 1];
@@ -392,7 +392,10 @@ const renderDetailPage = (data) => {
       "is-track",
       spotifyEmbed.type === "track",
     );
-    spotifyPlayer.title = `Spotify player for ${match.Title || "this album"}`;
+    spotifyPlayer.title =
+      spotifyEmbed.type === "artist"
+        ? `Spotify player for ${match.Artist || "this artist"}`
+        : `Spotify player for ${match.Title || "this album"}`;
     player.hidden = false;
   }
 

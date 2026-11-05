@@ -62,7 +62,7 @@ a {
   height: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0 1.5rem;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -371,7 +371,7 @@ body[data-page="home"] .footer__inner {
 
 .detail-page {
   min-height: 100vh;
-  padding: 4rem 1rem 4rem;
+  padding: 4rem 2rem 4rem;
 }
 
 .detail {

@@ -300,6 +300,36 @@ const setActiveNav = (page) => {
   });
 };
 
+const getSpotifyEmbed = (link) => {
+  try {
+    const url = new URL(link);
+    if (url.hostname !== "open.spotify.com") {
+      return null;
+    }
+
+    const path = url.pathname.split("/").filter(Boolean);
+    const resourceIndex = path.findIndex((segment) =>
+      ["album", "track"].includes(segment),
+    );
+    const resourceType = path[resourceIndex];
+    const resourceId = path[resourceIndex + 1];
+    if (
+      resourceIndex === -1 ||
+      !resourceId ||
+      !/^[A-Za-z0-9]+$/.test(resourceId)
+    ) {
+      return null;
+    }
+
+    return {
+      type: resourceType,
+      url: `https://open.spotify.com/embed/${resourceType}/${resourceId}`,
+    };
+  } catch {
+    return null;
+  }
+};
+
 const renderDetailPage = (data) => {
   const params = new URLSearchParams(window.location.search);
   const type = params.get("type");
@@ -350,6 +380,22 @@ const renderDetailPage = (data) => {
   detailLink.textContent = match.Link ? "Open link" : "No link available";
   detailLink.toggleAttribute("aria-disabled", !match.Link);
   detailBack.href = `${type === "albums" ? "music.html" : "films.html"}`;
+
+  const player = document.querySelector("#detailPlayer");
+  const spotifyPlayer = document.querySelector("#spotifyPlayer");
+  const spotifyEmbed =
+    type === "albums" ? getSpotifyEmbed(match.Link || "") : null;
+
+  if (player && spotifyPlayer && spotifyEmbed) {
+    spotifyPlayer.src = spotifyEmbed.url;
+    spotifyPlayer.classList.toggle(
+      "is-track",
+      spotifyEmbed.type === "track",
+    );
+    spotifyPlayer.title = `Spotify player for ${match.Title || "this album"}`;
+    player.hidden = false;
+  }
+
   document.title = `${match.Title || SHEETS[type].title} — Niels Olivarius`;
   setActiveNav(type);
 };

@@ -9,6 +9,12 @@
       content="Project detail page for Niels de Fine Olivarius work."
     />
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body data-page="detail">
@@ -41,6 +47,25 @@
             >Open link</a
           >
         </div>
+
+        <section
+          id="detailPlayer"
+          class="detail__player"
+          aria-labelledby="detailPlayerTitle"
+          hidden
+        >
+          <h2 id="detailPlayerTitle" class="detail__player-title">
+            Listen on Spotify
+          </h2>
+          <iframe
+            id="spotifyPlayer"
+            title="Spotify album player"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
+        </section>
       </article>
     </main>
     </section>
